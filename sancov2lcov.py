@@ -5,17 +5,17 @@ import os
 import sys
 
 def main():
-    parser = argparse.ArgumentParser(description="Convert symcov JSON to LCOV info format")
-    parser.add_argument("--symcov", required=True, help="Input symcov JSON file")
+    parser = argparse.ArgumentParser(description="Convert sancov JSON to LCOV info format")
+    parser.add_argument("--sancov", required=True, help="Input sancov JSON file")
     parser.add_argument("--output", required=True, help="Output LCOV info file")
     parser.add_argument("--srcpath", default=".", help="Root source directory to resolve relative paths")
     args = parser.parse_args()
 
     try:
-        with open(args.symcov, 'r') as f:
+        with open(args.sancov, 'r') as f:
             data = json.load(f)
     except Exception as e:
-        print(f"Error loading symcov file: {e}", file=sys.stderr)
+        print(f"Error loading sancov file: {e}", file=sys.stderr)
         sys.exit(1)
 
     covered_points = set(data.get("covered-points", []))

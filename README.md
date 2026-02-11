@@ -1,6 +1,6 @@
 # sancov2lcov
 
-A simple Python tool to convert LLVM's `sancov` JSON coverage reports (produced by `--symcov`) into LCOV `.info` format.
+A simple Python tool to convert LLVM's `sancov` JSON coverage reports (produced by `--sancov`) into LCOV `.info` format.
 
 This is useful for visualizing coverage data from fuzzing campaigns or other sanitizers using standard LCOV tooling like `genhtml`.
 
@@ -57,12 +57,12 @@ The resulting `coverage.json` should have a structure like this:
 Run `sancov2lcov.py` to convert the JSON report into an LCOV `.info` file:
 
 ```bash
-./sancov2lcov.py --symcov coverage.json --output coverage.info --srcpath /path/to/source/root
+./sancov2lcov.py --sancov coverage.json --output coverage.info --srcpath /path/to/source/root
 ```
 
 **Arguments:**
 
-*   `--symcov`: Path to the input JSON file (required).
+*   `--sancov`: Path to the input JSON file (required).
 *   `--output`: Path to the output `.info` file (required).
 *   `--srcpath`: Path to the source code root. This is used to resolve relative paths in the JSON report to absolute paths in the LCOV file. Default is `.` (current directory).
 
@@ -80,7 +80,7 @@ You can then open `html_report/index.html` in your browser.
 
 ```bash
 # Assuming you have a 'coverage.json' from your fuzzer run
-./sancov2lcov.py --symcov coverage.json --output coverage.info --srcpath .
+./sancov2lcov.py --sancov coverage.json --output coverage.info --srcpath .
 
 # Generate HTML report in 'out' directory
 genhtml coverage.info -o out
