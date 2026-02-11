@@ -9,7 +9,7 @@ class TestSancov2Lcov(unittest.TestCase):
         
         # Run the script
         result = subprocess.run(
-            ["python3", "sancov2lcov.py", "--symcov", input_file, "--output", output_file],
+            ["python3", "sancov2lcov", "--symcov", input_file, "--output", output_file],
             capture_output=True,
             text=True
         )

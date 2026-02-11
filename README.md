@@ -4,7 +4,7 @@ A toolkit for converting LLVM sanitizer coverage into formats usable by humans (
 
 ## Tools Included
 
-1.  **`sancov2lcov.py`**: Converts raw `sancov` JSON data into LCOV `.info` format.
+1.  **`sancov2lcov`**: Converts raw `sancov` JSON data into LCOV `.info` format.
 2.  **`lcov2llm`**: Analyzes the LCOV data to produce a "Frontier Report" — identifying exactly where execution stopped (Hit -> Miss transitions). This is designed to help LLM agents understand coverage gaps without reading the entire codebase.
 
 ## 1. Installation
@@ -14,7 +14,7 @@ No installation required. Clone and run:
 ```bash
 git clone https://github.com/your-username/sancov2lcov.git
 cd sancov2lcov
-chmod +x sancov2lcov.py lcov2llm
+chmod +x sancov2lcov lcov2llm
 ```
 
 ## 2. Generating Coverage Data
@@ -42,7 +42,7 @@ sancov -symbolize ./nginx_fuzzer *.sancov > coverage.json
 Convert the JSON report to the standard LCOV `.info` format:
 
 ```bash
-./sancov2lcov.py --symcov coverage.json --output coverage.info --srcpath /path/to/source
+./sancov2lcov --symcov coverage.json --output coverage.info --srcpath /path/to/source
 ```
 
 ## 4. Human Analysis (HTML Report)
