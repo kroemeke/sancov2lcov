@@ -18,9 +18,28 @@ chmod +x sancov2lcov.py
 
 ### 1. Generate Sancov JSON Data
 
-First, ensure you have a binary compiled with sanitizer coverage (e.g., `-fsanitize-coverage=trace-pc-guard,trace-cmp`). When run, this binary produces `.sancov` files.
+First, ensure you have a binary compiled with sanitizer coverage (e.g., `-fsanitize-coverage=trace-pc-guard,trace-cmp`).
 
-Use the `sancov` tool (from LLVM) to symbolize and convert the raw coverage data into a JSON report. You might need to use a script like `cov.py` (often found in LLVM source trees) or just use `llvm-cov` if your setup supports it directly, but this tool specifically targets the JSON output format that looks like this:
+To enable coverage generation, you must run your binary with `ASAN_OPTIONS=coverage=1`. This will create `.sancov` files in your current working directory, one for each process.
+
+```bash
+ASAN_OPTIONS=coverage=1 ./my_binary_executable
+```
+
+This will output files similar to:
+```
+my_binary.15579.sancov
+my_binary.15580.sancov
+my_binary.15581.sancov
+```
+
+Next, use the `sancov` tool (from LLVM) to symbolize these files and convert the raw coverage data into a single JSON report.
+
+```bash
+sancov -symbolize my_binary_executable *.sancov > coverage.json
+```
+
+The resulting `coverage.json` should have a structure like this:
 
 ```json
 {
