@@ -1,90 +1,93 @@
-# sancov2lcov
+# sancov2lcov & lcov2llm
 
-A simple Python tool to convert LLVM's `sancov` JSON coverage reports (produced by `--sancov`) into LCOV `.info` format.
+A toolkit for converting LLVM sanitizer coverage into formats usable by humans (`genhtml`) and LLM agents (`lcov2llm`).
 
-This is useful for visualizing coverage data from fuzzing campaigns or other sanitizers using standard LCOV tooling like `genhtml`.
+## Tools Included
 
-## Installation
+1.  **`sancov2lcov.py`**: Converts raw `sancov` JSON data into LCOV `.info` format.
+2.  **`lcov2llm`**: Analyzes the LCOV data to produce a "Frontier Report" — identifying exactly where execution stopped (Hit -> Miss transitions). This is designed to help LLM agents understand coverage gaps without reading the entire codebase.
 
-No installation is required. Just copy `sancov2lcov.py` and run it.
+## 1. Installation
+
+No installation required. Clone and run:
 
 ```bash
 git clone https://github.com/your-username/sancov2lcov.git
 cd sancov2lcov
-chmod +x sancov2lcov.py
+chmod +x sancov2lcov.py lcov2llm
 ```
 
-## Usage
+## 2. Generating Coverage Data
 
-### 1. Generate Sancov JSON Data
-
-First, ensure you have a binary compiled with sanitizer coverage (e.g., `-fsanitize-coverage=trace-pc-guard,trace-cmp`).
-
-To enable coverage generation, you must run your binary with `ASAN_OPTIONS=coverage=1`. This will create `.sancov` files in your current working directory, one for each process.
+First, run your sanitized binary to generate `.sancov` files:
 
 ```bash
-ASAN_OPTIONS=coverage=1 ./my_binary_executable
+# Enable coverage generation
+export ASAN_OPTIONS=coverage=1 
+
+# Run your fuzzer/binary
+./nginx_fuzzer
 ```
 
-This will output files similar to:
-```
-my_binary.15579.sancov
-my_binary.15580.sancov
-my_binary.15581.sancov
-```
+This produces files like `nginx_fuzzer.12345.sancov`.
 
-Next, use the `sancov` tool (from LLVM) to symbolize these files and convert the raw coverage data into a single JSON report.
+Next, convert these to a JSON report using LLVM's `sancov` tool:
 
 ```bash
-sancov -symbolize my_binary_executable *.sancov > coverage.json
+sancov -symbolize ./nginx_fuzzer *.sancov > coverage.json
 ```
 
-The resulting `coverage.json` should have a structure like this:
+## 3. Converting to LCOV
 
-```json
-{
-  "covered-points": ["0x1234", ...],
-  "point-symbol-info": {
-    "source_file.c": {
-      "0x1234": "10:5"
-    }
-  }
-}
-```
-
-### 2. Convert to LCOV
-
-Run `sancov2lcov.py` to convert the JSON report into an LCOV `.info` file:
+Convert the JSON report to the standard LCOV `.info` format:
 
 ```bash
-./sancov2lcov.py --sancov coverage.json --output coverage.info --srcpath /path/to/source/root
+./sancov2lcov.py --symcov coverage.json --output coverage.info --srcpath /path/to/source
 ```
 
-**Arguments:**
+## 4. Human Analysis (HTML Report)
 
-*   `--sancov`: Path to the input JSON file (required).
-*   `--output`: Path to the output `.info` file (required).
-*   `--srcpath`: Path to the source code root. This is used to resolve relative paths in the JSON report to absolute paths in the LCOV file. Default is `.` (current directory).
-
-### 3. Generate HTML Report
-
-Once you have the `coverage.info` file, use `genhtml` (part of the `lcov` package) to generate a browsable HTML report:
+Use standard tools to view the coverage:
 
 ```bash
 genhtml coverage.info -o html_report
+# Open html_report/index.html in browser
 ```
 
-You can then open `html_report/index.html` in your browser.
+## 5. LLM Agent Analysis (Frontier Report)
 
-## Example
+Use `lcov2llm` to generate a text-based report for AI analysis. This tool finds the "edges" of coverage—where your fuzzer hit a line but failed to execute the next logical block (usually a failed `if` check).
 
 ```bash
-# Assuming you have a 'coverage.json' from your fuzzer run
-./sancov2lcov.py --sancov coverage.json --output coverage.info --srcpath .
-
-# Generate HTML report in 'out' directory
-genhtml coverage.info -o out
+./lcov2llm coverage.info --srcpath /path/to/source > analysis_report.md
 ```
+
+### Example Output
+
+The report highlights the **Frontier** (Hit -> Miss) and provides context (including function headers), making it easy to spot why code wasn't reached.
+
+```c
+# Coverage Frontier Report
+
+## File: `/home/user/src/core/nginx.c`
+Found 35 frontiers.
+
+### Frontier at line 198 -> 208
+```c
+ 196 |       int ngx_cdecl
+ 197 |       main(int argc, char *const *argv)
+ 198 | HIT > {
+ 199 |           ngx_buf_t        *b;
+ 200 |           ngx_log_t        *log;
+ ...
+ 206 |           ngx_debug_init();
+ 207 |       
+ 208 | MISS|     if (ngx_strerror_init() != NGX_OK) {
+ 209 |               return 1;
+ 210 |           }
+```
+
+In this example, the agent can clearly see that `main` was entered (Line 198), but the error handling block at Line 208 was never taken (because `ngx_strerror_init` succeeded).
 
 ## License
 
